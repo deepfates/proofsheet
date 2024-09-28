@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "proofsheet"
+version = "0.1.0"
+description = "generate image variations in grids with Replicate and FastHTML"
+authors = ["deepfates <deepfates@gmail.com>"]
+license = "Apache-2"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+replicate = "^0.33.0"
+fastcore = "^1.7.9"
+python-fasthtml = "^0.6.8"
+requests = "^2.32.3"
+pillow = "^10.4.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
