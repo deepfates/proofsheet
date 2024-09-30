@@ -5,16 +5,16 @@ from fasthtml.common import Link, Input, Select, Option, Button, Group, Label, D
 
 from sqlite_minutils.db import NotFoundError
 from db import initialize_database
-from proofsheet.generate import generate_proofsheet
-from utils import valid_params
-from components.proofsheet_grid import proofsheet_grid
+from proofsheet.generate import generate_proof
+from proofsheet.utils import valid_params
+from proofsheet.components.proof_grid import proof_grid
+from proofsheet.components.search_form import search_form
 
 # Initialize the FastHTML app
 app = FastHTML()
 
 # Our FastHTML app
 app = FastHTML(hdrs=(
-    Link(rel="stylesheet", href="/static/styles.css", type="text/css"),
     Link(rel='stylesheet', href='https://unpkg.com/latex.css/style.min.css', type='text/css'),
     Link(rel='stylesheet', href='/static/styles.css', type='text/css'),
     ),
@@ -28,79 +28,19 @@ Proof = proofs.dataclass()
 # Register routes
 @app.get("/")
 def home():
-    inp_prompt = Input(
-        name="prompt",
-        placeholder="Enter a prompt",
-        value="A beautiful landscape",
-        required=True,
-    )
-    inp_grid_size = Input(
-        name="grid_size", type="number", min="1", max="10", value="3", required=True
-    )
-    inp_seed = Input(
-        name="seed", type="number", value="42", required=True
-    )
-    inp_x_param = Select(
-        *[Option(param) for param in valid_params], name="x_param", required=True
-    )
-    inp_x_range_start = Input(
-        name="x_range_start",
-        type="number",
-        step="any",
-        placeholder="X Range Start",
-        value="1",
-        required=True,
-    )
-    inp_x_range_end = Input(
-        name="x_range_end",
-        type="number",
-        step="any",
-        placeholder="X Range End",
-        value="50",
-        required=True,
-    )
-    inp_y_param = Select(
-        *[Option(param) for param in valid_params], name="y_param", required=True
-    )
-    inp_y_range_start = Input(
-        name="y_range_start",
-        type="number",
-        step="any",
-        placeholder="Y Range Start",
-        value="0.1",
-        required=True,
-    )
-    inp_y_range_end = Input(
-        name="y_range_end",
-        type="number",
-        step="any",
-        placeholder="Y Range End",
-        value="10.0",
-        required=True,
-    )
-
-    add_form = Form(
-        Group(inp_prompt, inp_grid_size, inp_seed),
-        Group(inp_x_param, Group(inp_x_range_start, inp_x_range_end)),
-        Group(inp_y_param, Group(inp_y_range_start, inp_y_range_end)),
-        Button("Generate"),
-        hx_post="/create_proofsheet",
-        hx_swap="afterbegin",  # Prepends the new proofsheet
-        hx_target="#proofs-container",  # Target the container where proofs are displayed
-        hx_trigger="submit",
-    )
-
     # Get all proofs
-    print("proofs", proofs)
+    # print("proofs", proofs)
     try:
-        valid_proofs = proofs(limit=10)
+        valid_proofs = proofs()
     except NotFoundError:
         valid_proofs = []
+
+    # print("valid_proofs length", len(valid_proofs))
 
     # Generate proofs HTML
     if valid_proofs:
         proofs_grid = Div(
-            *reversed([proofsheet_grid(p) for p in valid_proofs]),
+            *reversed([proof_grid(p) for p in valid_proofs]),
             id="proofs-container",
             cls="proofs-grid-container",
         )
@@ -114,13 +54,13 @@ def home():
     return Titled(
         "Proofs",
         Main(
-            add_form,
+            search_form(),
             proofs_grid,
             cls="container",
         ),
     )
-@app.post("/create_proofsheet")
-def create_proofsheet(
+@app.post("/create_proof")
+def create_proof(
     prompt: str,
     grid_size: int,
     seed: int,
@@ -146,11 +86,11 @@ def create_proofsheet(
 
     if errors:
         return Div(*[P(error) for error in errors], cls="error-messages")
-    # Create a unique folder for the proofsheet
+    # Create a unique folder for the proof
     folder = os.path.join("data", "proofs", str(uuid.uuid4()))
     os.makedirs(folder, exist_ok=True)
 
-    # Insert the new proofsheet into the database
+    # Insert the new proof into the database
     proof_data = {
         "id": uuid.uuid4(),
         "prompt": prompt,
@@ -167,14 +107,14 @@ def create_proofsheet(
     p = proofs.insert(proof_data)
     
 
-    # Start generating the proofsheet images
-    generate_proofsheet(proof_data)
+    # Start generating the proof images
+    generate_proof(proof_data)
 
     # Render the new proofshet grid to be appended
-    new_proofsheet_html = proofsheet_grid(p)
+    new_proof_html = proof_grid(p)
 
     # Return the new proofshet HTML to be appended
-    return new_proofsheet_html
+    return new_proof_html
 
 @app.get("/proofs/{proof_id}/image/{image_id}")
 def update_proof_image(proof_id: str, image_id: str):
@@ -189,11 +129,11 @@ def update_proof_image(proof_id: str, image_id: str):
         )
     else:
         return Div(
-            "Still generating...",
+            "",
             cls="placeholder",
             id=f"proof-{proof_id}-img-{image_id}",
             hx_get=f"/proofs/{proof_id}/image/{image_id}",
-            hx_trigger="every 2s",
+            hx_trigger="every 300ms",
             hx_swap="outerHTML",
         )
 

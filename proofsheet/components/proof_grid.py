@@ -1,10 +1,9 @@
-import os
-from fasthtml.common import Div, Img, P, Figure, Figcaption, Small
-from sqlite_minutils.db import NotFoundError
+from fasthtml.common import Div, P, Figure, Small 
+from sqlite_minutils.db import NotFoundError 
 
 from proofsheet.utils import calculate_range
 
-def proofsheet_grid(p):
+def proof_grid(p):
     try:
         grid_cells = []
         grid_size = p.grid_size
@@ -27,9 +26,8 @@ def proofsheet_grid(p):
                     hx_trigger="load",
                     hx_swap="outerHTML",
                 )
-
-                caption = Div(
-                    f"{x_values[i]}, {y_values[j]}",
+                caption = Div( 
+                    f"{x_values[i]:.1f}, {y_values[j]:.1f}",
                     cls="caption"
                 )
 
@@ -42,7 +40,7 @@ def proofsheet_grid(p):
                 row.append(cell)
             grid_cells.append(Div(*row, cls="grid-row"))
 
-        grid = Div(*grid_cells, cls="proofsheet-grid", style=f"--grid-size: {grid_size};")
+        grid = Div(*grid_cells, cls="proof-grid", style=f"--grid-size: {grid_size};")
 
         return Div(
             Div(
@@ -51,7 +49,7 @@ def proofsheet_grid(p):
                 cls="generation-prompt"
             ),
             grid,
-            cls="proofsheet-card",
+            cls="proof-card",
         )
     except NotFoundError:
-        return Div(P("Proofsheet not found."), cls="error")
+        return Div(P("proof not found."), cls="error")

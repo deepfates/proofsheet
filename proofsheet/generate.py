@@ -1,5 +1,4 @@
 import os
-import uuid
 import requests
 from typing import Dict, Any
 from fastcore.parallel import threaded
@@ -19,7 +18,7 @@ if not replicate_api_token:
 client = replicate.Client(api_token=replicate_api_token)  
 
 @threaded
-def generate_proofsheet(proof: Dict[str, Any]):
+def generate_proof(proof: Dict[str, Any]):
     x_values = calculate_range(proof['x_range_start'], proof['x_range_end'], proof['grid_size'], proof['x_param'])
     y_values = calculate_range(proof['y_range_start'], proof['y_range_end'], proof['grid_size'], proof['y_param'])
 
@@ -36,12 +35,13 @@ def generate_proofsheet(proof: Dict[str, Any]):
 @threaded
 def generate_and_save_proof_image(prompt: str, image_id: str, folder: str, params: Dict[str, Any], proof_id: str):
     corrected_params = correct_param_types(params)
-
+    # print(f"Corrected params: {corrected_params}")
     # Set defaults and ensure parameters are valid
     defaults = {
         "num_inference_steps": 50,
         "guidance_scale": 7.5,
         "prompt_strength": 0.8,
+        "seed": 42
     }
 
     for key, value in defaults.items():
@@ -60,11 +60,11 @@ def generate_and_save_proof_image(prompt: str, image_id: str, folder: str, param
 
     # Run the model and save the image
     try:
-        print(f"Generating image {image_id} with params: {model_input}")
+        # print(f"Generating image {image_id} with params: {model_input}")
         
         # Replace the mock with actual image generation logic
         response = client.run("black-forest-labs/flux-dev", input=model_input)
-        print(response)
+        # print(response)
         
         if len(response) > 0:
             image_url = response[0]
@@ -72,16 +72,16 @@ def generate_and_save_proof_image(prompt: str, image_id: str, folder: str, param
             image_data = requests.get(image_url).content
             with open(image_path, 'wb') as f:
                 f.write(image_data)
-            print(f"Image {image_id} generated and saved at {image_path}.")
+            # print(f"Image {image_id} generated and saved at {image_path}.")
             
             # Verify that the file was actually created
             if os.path.exists(image_path):
-                print(f"Confirmed: Image file exists at {image_path}")
+                # print(f"Confirmed: Image file exists at {image_path}")
             else:
-                print(f"Error: Image file was not created at {image_path}")
+                # print(f"Error: Image file was not created at {image_path}")
         else:
-            print(f"Failed to download placeholder image for {image_id}. Status code: {response.status_code}")
+            # print(f"Failed to download placeholder image for {image_id}. Status code: {response.status_code}")
     except replicate.exceptions.ReplicateError as e:
-        print(f"Error generating image {image_id}: {e}")
+        # print(f"Error generating image {image_id}: {e}")
     except Exception as e:
-        print(f"Unexpected error generating image {image_id}: {e}")
+        # print(f"Unexpected error generating image {image_id}: {e}")
