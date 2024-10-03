@@ -76,12 +76,12 @@ def generate_and_save_proof_image(prompt: str, image_id: str, folder: str, param
             
             # Verify that the file was actually created
             if os.path.exists(image_path):
-                # print(f"Confirmed: Image file exists at {image_path}")
+                print(f"Confirmed: Image file exists at {image_path}")
             else:
-                # print(f"Error: Image file was not created at {image_path}")
+                raise FileNotFoundError(f"Error: Image file was not created at {image_path}")
         else:
-            # print(f"Failed to download placeholder image for {image_id}. Status code: {response.status_code}")
+            raise RuntimeError(f"Failed to download placeholder image for {image_id}. Status code: {response.status_code}")
     except replicate.exceptions.ReplicateError as e:
-        # print(f"Error generating image {image_id}: {e}")
+        raise RuntimeError(f"Error generating image {image_id}: {e}")
     except Exception as e:
-        # print(f"Unexpected error generating image {image_id}: {e}")
+        raise RuntimeError(f"Unexpected error generating image {image_id}: {e}")
